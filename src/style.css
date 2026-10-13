@@ -77,7 +77,7 @@ button:hover {
   height: 150px;
   border-radius: 50%;
   
-  /* Textura equirectangular desplegada oficial (Tierra) */
+  /* Textura equirectangular*/
   background-image: url('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg');
   
   /* Hacemos que el mapa sea el doble de ancho que nuestro círculo para que pueda rotar */
