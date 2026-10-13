@@ -1,5 +1,5 @@
 // src/ui.ts
-import { MarsPhoto } from './api.ts'; // Importación de módulos ES[cite: 114]
+import type { MarsPhoto } from './api';
 
 const gallery = document.getElementById("gallery") as HTMLDivElement;
 
