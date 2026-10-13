@@ -1,55 +1,35 @@
-// src/api.ts
-
-// Clave real de la NASA
-const API_KEY = "lqLwTeQ6E7Z8FOrnlbpObenGlCTrmnQKJNxygLtZ";
-
-// Definimos la "forma" de los datos con TypeScript para tener autocompletado y evitar errores
-export interface MarsPhoto {
-  id: number;
-  img_src: string;
-  earth_date: string;
+export interface Exoplanet {
+  pl_name: string;
+  pl_rade: number | null; 
+  discoverymethod: string;
+  disc_year: number;
 }
 
-interface MarsResponse {
-  photos: MarsPhoto[];
-}
+export async function searchExoplanet(query: string): Promise<Exoplanet[]> {
+  // Arreglamos la búsqueda: añadimos un espacio entre número y letra (ej: 16b -> 16 b)
+  let cleanQuery = query.toLowerCase()
+    .replace("centauri", "cen")
+    .replace("pegasi", "peg")
+    .replace("cancri", "cnc")
+    .replace(/([0-9])([a-z])/g, '$1 $2') // Precisión exacta
+    .trim();
 
-/**
- * Función que pide los datos a la NASA.
- * Módulo ES: se usa `export` para exponerla.
- */
-export async function getRoverPhotos(sol: string, camera: string): Promise<MarsPhoto[]> {
-  // BONUS 15 pts: Uso de localStorage como caché[cite: 117]
-  // Creamos un identificador único para esta combinación exacta de día y cámara
-  const cacheKey = `nasa_curiosity_${sol}_${camera}`;
-  
-  // Intentamos leer del almacenamiento local[cite: 117]
-  const cachedData = localStorage.getItem(cacheKey);
-  
-  if (cachedData) {
-    console.log("Recuperado desde la caché local 🚀");
-    // Convertimos el texto de vuelta a un array de objetos[cite: 116]
-    return JSON.parse(cachedData);
+  const cacheKey = `nasa_exo_v4_${cleanQuery.replace(/\s/g, '_')}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    return JSON.parse(cached);
   }
 
-  // Si no estaba en caché, hacemos la petición a la red[cite: 114]
-  console.log("Pidiendo datos a la NASA...");
-  const url = `https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=${sol}&camera=${camera}&api_key=${API_KEY}`;
+  const sql = `select pl_name,pl_rade,discoverymethod,disc_year from ps where default_flag=1 and lower(pl_name) like '%${cleanQuery}%'`;
+  const url = `/api/nasa/TAP/sync?query=${encodeURIComponent(sql)}&format=json`;
   
-  // async/await puro para la asincronía[cite: 111]
   const response = await fetch(url);
   
-  // ROBUSTEZ: fetch no rechaza errores 404 o 500, hay que comprobar response.ok obligatoriamente[cite: 113, 114]
   if (!response.ok) {
-    // Lanzar siempre un objeto Error, nunca un string[cite: 115]
-    throw new Error(`Error de conexión con la NASA (Código: ${response.status})`);
+    throw new Error(`Error en la base de datos (Código: ${response.status})`);
   }
 
-  // Parseamos la respuesta a JSON[cite: 114]
-  const data = (await response.json()) as MarsResponse;
-  
-  // Guardamos las fotos en la caché convirtiendo el objeto a texto JSON
-  localStorage.setItem(cacheKey, JSON.stringify(data.photos));
-
-  return data.photos;
+  const data = await response.json();
+  localStorage.setItem(cacheKey, JSON.stringify(data));
+  return data;
 }

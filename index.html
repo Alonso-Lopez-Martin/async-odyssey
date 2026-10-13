@@ -1,37 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mando del Rover - Async Odyssey</title>
-    <link rel="stylesheet" href="/src/style.css" />
-  </head>
-  <body>
-    <h1>🛰️ Enlace directo: Rover Curiosity</h1>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buscador de Exoplanetas</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <h1>🪐 Explorador de Exoplanetas</h1>
+  
+  <!-- El buscador que querías -->
+  <div class="search-panel">
+    <input type="text" id="search-input" placeholder="Ej: Kepler-22 b, TRAPPIST-1..." />
+    <button id="search-btn">Buscar Planeta</button>
+  </div>
 
-    <div class="dashboard">
-      <div class="control-group">
-        <label for="sol-slider">
-          Día Marciano (Sol): 
-          <span id="sol-valor" style="color: var(--accent); font-weight: bold;">1000</span>
-        </label>
-        <input type="range" id="sol-slider" min="1" max="4000" value="1000" />
-      </div>
+  <p id="message-box" class="estado-mensaje"></p>
 
-      <div class="control-group">
-        <label for="camera-select">Cámara del Rover:</label>
-        <select id="camera-select">
-          <option value="FHAZ">Front Hazard Avoidance Camera (FHAZ)</option>
-          <option value="RHAZ">Rear Hazard Avoidance Camera (RHAZ)</option>
-          <option value="NAVCAM">Navigation Camera (NAVCAM)</option>
-        </select>
-      </div>
+  <!-- El visor principal -->
+  <div class="viewer-container">
+    <div id="planet-display">
+      <!-- Aquí inyectaremos el planeta rotando -->
     </div>
-
-    <div id="gallery">
-      <p class="estado-mensaje">Esperando telemetría... mueve los controles para iniciar.</p>
+    
+    <!-- Los datos en la esquina como pediste -->
+    <div id="planet-info" class="data-corner">
+      <p>Inicia una búsqueda para visualizar telemetría.</p>
     </div>
+  </div>
 
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>

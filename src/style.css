@@ -1,8 +1,7 @@
 :root {
-  --bg-color: #0d1117;
-  --panel-bg: #161b22;
+  --bg-color: #050810;
   --text-color: #c9d1d9;
-  --accent: #ff7b25;
+  --accent: #00d2ff;
 }
 
 body {
@@ -16,80 +15,114 @@ body {
 
 h1 {
   color: var(--accent);
-  text-transform: uppercase;
   letter-spacing: 2px;
 }
 
-.dashboard {
-  background-color: var(--panel-bg);
-  border: 1px solid #30363d;
-  border-radius: 10px;
-  padding: 20px;
+.search-panel {
+  margin: 20px auto;
   max-width: 600px;
-  margin: 0 auto 20px auto;
-  box-shadow: 0 4px 15px rgba(255, 123, 37, 0.1);
-}
-
-.control-group {
-  margin: 15px 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 10px;
 }
 
-input[type="range"] {
-  width: 80%;
-  cursor: pointer;
-}
-
-select {
-  background-color: #21262d;
-  color: white;
+input {
+  flex: 1;
+  padding: 12px;
+  background: #161b22;
   border: 1px solid #30363d;
-  padding: 10px;
+  color: white;
   border-radius: 5px;
   font-family: inherit;
+}
+
+button {
+  padding: 12px 20px;
+  background: var(--accent);
+  color: black;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
   cursor: pointer;
-  width: 80%;
+  font-family: inherit;
 }
 
-#gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 20px;
-  min-height: 200px;
-}
-
-.photo-card {
-  border: 2px solid #30363d;
-  border-radius: 8px;
-  overflow: hidden;
-  width: 250px;
-  background-color: var(--panel-bg);
-}
-
-.photo-card img {
-  width: 100%;
-  height: 250px;
-  object-fit: cover;
-  display: block;
-}
-
-.photo-card p {
-  margin: 10px;
-  font-size: 0.9em;
+button:hover {
+  background: #0099cc;
 }
 
 .estado-mensaje {
-  font-size: 1.2em;
-  color: var(--accent);
-  padding: 20px;
-  width: 100%;
+  font-size: 1.1em;
+  margin: 10px 0;
+  min-height: 1.5em;
 }
 
-.error-mensaje {
-  color: #ff4444;
+.viewer-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  height: 500px;
+  margin: 0 auto;
+  /* Fondo estrellado simulado */
+  background: radial-gradient(circle at center, #1a1a2e, #000);
+  border: 1px solid #333;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.planet-sphere {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  
+  /* Textura equirectangular desplegada oficial (Tierra) */
+  background-image: url('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg');
+  
+  /* Hacemos que el mapa sea el doble de ancho que nuestro círculo para que pueda rotar */
+  background-size: 200% 100%;
+  
+  /* Sombras interiores (inset) para darle el volumen esférico 3D */
+  box-shadow: inset -25px -25px 40px rgba(0,0,0,0.9), 
+              inset 10px 10px 30px rgba(255,255,255,0.2), 
+              0 0 30px rgba(0, 210, 255, 0.2);
+              
+  animation: spin 15s linear infinite;
+}
+
+@keyframes spin {
+  from { background-position: 0 0; }
+  to { background-position: -200% 0; }
+}
+
+.data-corner {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--accent);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: left;
+  backdrop-filter: blur(5px);
+  min-width: 250px;
+}
+
+.data-corner h3 {
+  margin: 0 0 10px 0;
+  color: var(--accent);
+  border-bottom: 1px solid #333;
+  padding-bottom: 5px;
+}
+
+.data-corner ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.data-corner li {
+  margin-bottom: 8px;
+  font-size: 0.9em;
 }

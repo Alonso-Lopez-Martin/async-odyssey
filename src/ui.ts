@@ -1,38 +1,49 @@
-// src/ui.ts
-import type { MarsPhoto } from './api';
+import type { Exoplanet } from './api';
 
-const gallery = document.getElementById("gallery") as HTMLDivElement;
+const planetDisplay = document.getElementById('planet-display') as HTMLDivElement;
+const planetInfo = document.getElementById('planet-info') as HTMLDivElement;
+const messageBox = document.getElementById('message-box') as HTMLParagraphElement;
 
-export function renderLoading(): void {
-  // 1. Estado visual de carga[cite: 112]
-  gallery.innerHTML = '<p class="estado-mensaje">⏳ Estableciendo conexión con el Rover Curiosity...</p>';
+export function showLoading(mensaje: string): void {
+  messageBox.textContent = mensaje;
+  messageBox.style.color = "#00d2ff";
 }
 
-export function renderError(message: string): void {
-  // 2. Estado visual de error[cite: 112]
-  gallery.innerHTML = `<p class="error-mensaje">⚠ ${message}</p>`;
+export function showError(mensaje: string): void {
+  messageBox.textContent = `⚠ ${mensaje}`;
+  messageBox.style.color = "#ff4444";
+  planetDisplay.innerHTML = "";
+  planetInfo.innerHTML = "";
 }
 
-export function renderPhotos(photos: MarsPhoto[]): void {
-  // 3. Robustez: control de respuestas vacías (el Rover no hizo fotos ese día)[cite: 112]
-  if (photos.length === 0) {
-    gallery.innerHTML = '<p class="estado-mensaje">El Rover no capturó imágenes con esta cámara en este Sol marciano. Prueba otra combinación.</p>';
-    return;
-  }
+export function clearMessage(): void {
+  messageBox.textContent = "";
+}
 
-  // TRANSFORMACIÓN DE DATOS (15 pts)[cite: 93]
-  // Limitamos a un máximo de 12 fotos con .slice y transformamos los objetos a HTML con .map sin usar bucles innecesarios[cite: 93]
-  const html = photos
-    .slice(0, 12)
-    .map((photo) => {
-      return `
-        <div class="photo-card">
-          <img src="${photo.img_src}" alt="Foto de Marte ID ${photo.id}" loading="lazy" />
-          <p>Fecha Terrestre: ${photo.earth_date}</p>
-        </div>
-      `;
-    })
-    .join(""); // .join() convierte el array resultante en un único string HTML[cite: 113]
+export function renderPlanet(planet: Exoplanet): void {
+  const radio = planet.pl_rade ? Math.min(Math.max(planet.pl_rade, 0.5), 2.5) : 1;
+  const sizePx = Math.round(150 * radio);
 
-  gallery.innerHTML = html;
+  // Texturas 100% extraterrestres y fiables alojadas en un CDN profesional
+  const texturas = [
+    'https://unpkg.com/three@0.160.0/examples/textures/planets/mars_1k_color.jpg',      // Rocoso rojo
+    'https://unpkg.com/three@0.160.0/examples/textures/planets/moon_1024.jpg',          // Rocoso cráteres (gris)
+    'https://unpkg.com/three@0.160.0/examples/textures/planets/venus_surface_2048.jpg'  // Superficie densa/volcánica
+  ];
+
+  const indiceTextura = planet.pl_name.length % texturas.length;
+  const texturaSeleccionada = texturas[indiceTextura];
+
+  planetDisplay.innerHTML = `
+    <div class="planet-sphere" style="width: ${sizePx}px; height: ${sizePx}px; background-image: url('${texturaSeleccionada}');"></div>
+  `;
+
+  planetInfo.innerHTML = `
+    <h3>${planet.pl_name}</h3>
+    <ul>
+      <li><strong>Radio Terrestre:</strong> ${planet.pl_rade ? planet.pl_rade + ' x 🌍' : 'Desconocido'}</li>
+      <li><strong>Método:</strong> ${planet.discoverymethod}</li>
+      <li><strong>Año de hallazgo:</strong> ${planet.disc_year}</li>
+    </ul>
+  `;
 }
