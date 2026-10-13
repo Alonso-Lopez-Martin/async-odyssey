@@ -3,14 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Async Odyssey</title>
-    <!-- Vite inyecta automáticamente type="module" aquí -->
+    <title>Mando del Rover - Async Odyssey</title>
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
-  <body style="font-family: system-ui; text-align: center; padding: 20px;">
-    <h1>Pokédex Asíncrona</h1>
-    <!-- Aquí pintaremos los datos -->
-    <div id="app"></div> 
-    
+  <body>
+    <h1>🛰️ Enlace directo: Rover Curiosity</h1>
+
+    <div class="dashboard">
+      <div class="control-group">
+        <label for="sol-slider">
+          Día Marciano (Sol): 
+          <span id="sol-valor" style="color: var(--accent); font-weight: bold;">1000</span>
+        </label>
+        <input type="range" id="sol-slider" min="1" max="4000" value="1000" />
+      </div>
+
+      <div class="control-group">
+        <label for="camera-select">Cámara del Rover:</label>
+        <select id="camera-select">
+          <option value="FHAZ">Front Hazard Avoidance Camera (FHAZ)</option>
+          <option value="RHAZ">Rear Hazard Avoidance Camera (RHAZ)</option>
+          <option value="NAVCAM">Navigation Camera (NAVCAM)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="gallery">
+      <p class="estado-mensaje">Esperando telemetría... mueve los controles para iniciar.</p>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
