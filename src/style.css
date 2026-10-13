@@ -1,0 +1,95 @@
+:root {
+  --bg-color: #0d1117;
+  --panel-bg: #161b22;
+  --text-color: #c9d1d9;
+  --accent: #ff7b25;
+}
+
+body {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+}
+
+h1 {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.dashboard {
+  background-color: var(--panel-bg);
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto 20px auto;
+  box-shadow: 0 4px 15px rgba(255, 123, 37, 0.1);
+}
+
+.control-group {
+  margin: 15px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+input[type="range"] {
+  width: 80%;
+  cursor: pointer;
+}
+
+select {
+  background-color: #21262d;
+  color: white;
+  border: 1px solid #30363d;
+  padding: 10px;
+  border-radius: 5px;
+  font-family: inherit;
+  cursor: pointer;
+  width: 80%;
+}
+
+#gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+  min-height: 200px;
+}
+
+.photo-card {
+  border: 2px solid #30363d;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 250px;
+  background-color: var(--panel-bg);
+}
+
+.photo-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-card p {
+  margin: 10px;
+  font-size: 0.9em;
+}
+
+.estado-mensaje {
+  font-size: 1.2em;
+  color: var(--accent);
+  padding: 20px;
+  width: 100%;
+}
+
+.error-mensaje {
+  color: #ff4444;
+}
