@@ -26,14 +26,32 @@ export function renderPlanet(planet: Exoplanet): void {
   const temp = planet.pl_eqt;
   const masa = planet.pl_bmasse;
 
-  // LÓGICA FÍSICA: Calculamos la densidad en g/cm³ (La densidad de la Tierra es ~5.51 g/cm³)
-  // Fórmula: (Masa Terrestre / Radio Terrestre al cubo) * 5.51
+  // CÁLCULOS ASTROFÍSICOS AVANZADOS
   let densidad: number | null = null;
+  let gravedad: number | null = null;
+  
   if (masa && planet.pl_rade) {
     densidad = (masa / Math.pow(planet.pl_rade, 3)) * 5.51;
+    gravedad = masa / Math.pow(planet.pl_rade, 2); // Gravedad relativa a la Tierra (1g)
   }
 
-  // Colecciones de imágenes
+  // Distancia en Años Luz (1 Pársec = 3.26156 AL)
+  const distAL = planet.sy_dist ? Math.round(planet.sy_dist * 3.26156) : null;
+
+  // Deducción de Habitabilidad
+  let habitabilidad = "Desconocida";
+  if (temp) {
+    // Si la temperatura permite agua líquida y es un planeta rocoso (denso)
+    if (temp >= 273 && temp <= 373 && (!densidad || densidad > 3.5)) {
+      habitabilidad = "Potencialmente Habitable 💧";
+    } else if (temp < 273) {
+      habitabilidad = "Demasiado Frío ❄️";
+    } else {
+      habitabilidad = "Demasiado Caliente 🔥";
+    }
+  }
+
+  // Colecciones de texturas locales
   const rocososCalientes = ['/Venus.jpg', '/Jupiter_Io(B).jpg'];
   const rocososTemplados = ['/Mars.jpg'];
   const rocososFrios = ['/Pluto.jpg', '/Pluto_Charon.jpg', '/Jupiter_Europa.jpg', '/Jupiter_Ganymede.jpg', '/Jupiter_Callisto.jpg'];
@@ -43,74 +61,52 @@ export function renderPlanet(planet: Exoplanet): void {
 
   let texturaSeleccionada = '';
   let tipoPlaneta = 'Desconocido';
-  const selectorAtor = planet.pl_name.length; 
+  const selector = planet.pl_name.length; 
 
-  // DEDUCCIÓN ASTROFÍSICA AVANZADA (Densidad + Temperatura)
   if (radio < 0.5) {
     tipoPlaneta = "Planeta Enano / Asteroide";
-    texturaSeleccionada = enanosYermos[selectorAtor % enanosYermos.length];
-    
+    texturaSeleccionada = enanosYermos[selector % enanosYermos.length];
   } else if (densidad !== null) {
-    
-    // 1. SI TENEMOS DENSIDAD, ELLA DICTA LA GEOLOGÍA
     if (densidad >= 4) {
-      // Alta densidad = Rocoso o Metálico
-      if (temp && temp > 800) {
-        tipoPlaneta = "Rocoso (Mundo de Lava/Infernal)";
-        texturaSeleccionada = rocososCalientes[selectorAtor % rocososCalientes.length];
-      } else if (temp && temp > 200 && temp < 400) {
-        tipoPlaneta = "Rocoso (Templado/Habitable)";
-        texturaSeleccionada = rocososTemplados[selectorAtor % rocososTemplados.length];
-      } else {
-        tipoPlaneta = "Rocoso (Mundo Helado/Yermo)";
-        texturaSeleccionada = rocososFrios[selectorAtor % rocososFrios.length];
-      }
+      if (temp && temp > 800) { tipoPlaneta = "Rocoso (Mundo de Lava)"; texturaSeleccionada = rocososCalientes[selector % rocososCalientes.length]; }
+      else if (temp && temp > 200 && temp < 400) { tipoPlaneta = "Rocoso (Templado)"; texturaSeleccionada = rocososTemplados[selector % rocososTemplados.length]; }
+      else { tipoPlaneta = "Rocoso (Helado/Yermo)"; texturaSeleccionada = rocososFrios[selector % rocososFrios.length]; }
     } else if (densidad >= 2 && densidad < 4) {
-      // Densidad media = Mucha agua o atmósfera súper densa
-      tipoPlaneta = "Mundo Océano / Hielo / Minineptuno";
-      texturaSeleccionada = densosOHelados[selectorAtor % densosOHelados.length];
+      tipoPlaneta = "Mundo Océano / Minineptuno"; texturaSeleccionada = densosOHelados[selector % densosOHelados.length];
     } else {
-      // Baja densidad = Todo gas
-      tipoPlaneta = "Gigante Gaseoso";
-      texturaSeleccionada = gigantesGaseosos[selectorAtor % gigantesGaseosos.length];
+      tipoPlaneta = "Gigante Gaseoso"; texturaSeleccionada = gigantesGaseosos[selector % gigantesGaseosos.length];
     }
-    
   } else {
-    // 2. FALLBACK: Si falta la masa o el radio, intentamos adivinar solo por el tamaño
+    // Fallback por radio
     if (radio < 1.6) {
-      if (temp && temp > 800) {
-        tipoPlaneta = "Rocoso (Mundo de Lava)";
-        texturaSeleccionada = rocososCalientes[selectorAtor % rocososCalientes.length];
-      } else if (temp && temp > 200 && temp < 400) {
-        tipoPlaneta = "Rocoso (Templado)";
-        texturaSeleccionada = rocososTemplados[selectorAtor % rocososTemplados.length];
-      } else {
-        tipoPlaneta = "Rocoso (Mundo Helado)";
-        texturaSeleccionada = rocososFrios[selectorAtor % rocososFrios.length];
-      }
+      if (temp && temp > 800) { tipoPlaneta = "Rocoso (Lava)"; texturaSeleccionada = rocososCalientes[selector % rocososCalientes.length]; }
+      else if (temp && temp > 200 && temp < 400) { tipoPlaneta = "Rocoso (Templado)"; texturaSeleccionada = rocososTemplados[selector % rocososTemplados.length]; }
+      else { tipoPlaneta = "Rocoso (Helado)"; texturaSeleccionada = rocososFrios[selector % rocososFrios.length]; }
     } else if (radio < 4) {
-      tipoPlaneta = "Supertierra / Gigante de Hielo";
-      texturaSeleccionada = densosOHelados[selectorAtor % densosOHelados.length];
+      tipoPlaneta = "Supertierra / Gigante de Hielo"; texturaSeleccionada = densosOHelados[selector % densosOHelados.length];
     } else {
-      tipoPlaneta = "Gigante Gaseoso";
-      texturaSeleccionada = gigantesGaseosos[selectorAtor % gigantesGaseosos.length];
+      tipoPlaneta = "Gigante Gaseoso"; texturaSeleccionada = gigantesGaseosos[selector % gigantesGaseosos.length];
     }
   }
 
-  // Renderizamos la esfera
   planetDisplay.innerHTML = `
     <div class="planet-sphere" style="width: ${sizePx}px; height: ${sizePx}px; background-image: url('${texturaSeleccionada}');"></div>
   `;
 
-  // Imprimimos la telemetría añadiendo la Densidad calculada
+  // Imprimimos la nueva cuadrícula estilo NASA
   planetInfo.innerHTML = `
     <h3>${planet.pl_name}</h3>
-    <ul>
-      <li><strong>Clasificación:</strong> ${tipoPlaneta}</li>
-      <li><strong>Radio:</strong> ${planet.pl_rade ? planet.pl_rade + ' x 🌍' : (planet.pl_bmasse ? '~' + (Math.round(radio*10)/10) + ' x 🌍 (est.)' : 'Sin datos')}</li>
-      <li><strong>Masa:</strong> ${planet.pl_bmasse ? planet.pl_bmasse + ' x 🌍' : 'Sin datos'}</li>
-      <li><strong>Densidad (Calculada):</strong> ${densidad ? (Math.round(densidad * 100) / 100) + ' g/cm³' : 'Datos insuficientes'}</li>
-      <li><strong>Temperatura de Equilibrio:</strong> ${planet.pl_eqt ? planet.pl_eqt + ' K' : 'Sin datos'}</li>
+    <ul class="data-grid">
+      <li><strong>Clasificación</strong> ${tipoPlaneta}</li>
+      <li><strong>Habitabilidad</strong> ${habitabilidad}</li>
+      <li><strong>Estrella Anfitriona</strong> ${planet.hostname}</li>
+      <li><strong>Distancia</strong> ${distAL ? distAL + ' Años Luz' : 'Desconocida'}</li>
+      <li><strong>Gravedad</strong> ${gravedad ? (Math.round(gravedad * 100) / 100) + ' x 🌍 (g)' : 'Datos insuficientes'}</li>
+      <li><strong>Radio</strong> ${planet.pl_rade ? planet.pl_rade + ' x 🌍' : '~' + (Math.round(radio*10)/10) + ' x 🌍'}</li>
+      <li><strong>Masa</strong> ${planet.pl_bmasse ? planet.pl_bmasse + ' x 🌍' : 'Desconocida'}</li>
+      <li><strong>Densidad</strong> ${densidad ? (Math.round(densidad * 100) / 100) + ' g/cm³' : 'Desconocida'}</li>
+      <li><strong>Temp. Equilibrio</strong> ${planet.pl_eqt ? planet.pl_eqt + ' K' : 'Desconocida'}</li>
+      <li><strong>Descubrimiento</strong> ${planet.disc_year} (${planet.discoverymethod})</li>
     </ul>
   `;
 }

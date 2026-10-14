@@ -56,38 +56,80 @@ button:hover {
   min-height: 1.5em;
 }
 
+/* CONTENEDOR PRINCIPAL: Ahora mucho más ancho (1200px) */
 .viewer-container {
-  position: relative;
   width: 100%;
-  max-width: 800px;
-  height: 500px;
+  max-width: 1200px;
   margin: 0 auto;
-  /* Fondo estrellado simulado */
-  background: radial-gradient(circle at center, #1a1a2e, #000);
+  display: flex;
+  flex-direction: column;
+  background: #11151c;
   border: 1px solid #333;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ZONA DEL PLANETA (Visor Superior panorámico) */
+#planet-display {
+  width: 100%;
+  height: 450px;
+  background: radial-gradient(circle at center, #1a1a2e, #000);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* ZONA DE DATOS (Dashboard Inferior) */
+.data-corner {
+  padding: 25px;
+  text-align: left;
+  border-top: 1px solid #333;
+}
+
+.data-corner h3 {
+  margin: 0 0 20px 0;
+  color: var(--accent);
+  font-size: 1.8em;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+}
+
+/* LA CUADRÍCULA: 5 columnas exactas para hacer 2 filas perfectas de 10 elementos */
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.data-grid li {
+  background: #1a1e26;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
+  font-size: 0.95em;
+}
+
+.data-grid strong {
+  display: block;
+  color: #8b949e;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  letter-spacing: 1px;
+}
+
+/* LA MAGIA DEL EFECTO 3D (Esfera CSS) */
 .planet-sphere {
-  width: 150px;
-  height: 150px;
   border-radius: 50%;
-  
-  /* Textura equirectangular*/
-  background-image: url('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg');
-  
-  /* Hacemos que el mapa sea el doble de ancho que nuestro círculo para que pueda rotar */
   background-size: 200% 100%;
-  
-  /* Sombras interiores (inset) para darle el volumen esférico 3D */
+  background-repeat: repeat-x;
   box-shadow: inset -25px -25px 40px rgba(0,0,0,0.9), 
               inset 10px 10px 30px rgba(255,255,255,0.2), 
               0 0 30px rgba(0, 210, 255, 0.2);
-              
   animation: spin 15s linear infinite;
 }
 
@@ -96,33 +138,9 @@ button:hover {
   to { background-position: -200% 0; }
 }
 
-.data-corner {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid var(--accent);
-  padding: 15px;
-  border-radius: 8px;
-  text-align: left;
-  backdrop-filter: blur(5px);
-  min-width: 250px;
-}
-
-.data-corner h3 {
-  margin: 0 0 10px 0;
-  color: var(--accent);
-  border-bottom: 1px solid #333;
-  padding-bottom: 5px;
-}
-
-.data-corner ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.data-corner li {
-  margin-bottom: 8px;
-  font-size: 0.9em;
+/* Adaptación para pantallas pequeñas y móviles */
+@media (max-width: 1000px) {
+  .data-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
 }
