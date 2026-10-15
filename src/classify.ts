@@ -1,6 +1,5 @@
 import type { Exoplanet } from './api';
 
-// Interfaz para agrupar las métricas calculadas sin tocar el DOM
 export interface PlanetMetrics {
   densidad: number | null;
   gravedad: number | null;
@@ -8,12 +7,51 @@ export interface PlanetMetrics {
   habitabilidad: string;
   tipoPlaneta: string;
   textura: string;
+  radioBase: number; // Lo calculamos aquí para no repetir lógica en la UI
 }
 
-// Corrección: Módulo de funciones puras. Entran datos, salen datos, sin tocar el HTML.
+// Interfaz para el resultado procesado
+export interface ProcessedData {
+  bestMatch: Exoplanet;
+  total: number;
+  statsArray: string[];
+}
+
+/**
+ * Corrección Módulos y Transformación: Toda la orquestación de datos (filtrado, 
+ * deduplicación eficiente O(n), ordenación inmutable y reducción) sucede en este módulo puro.
+ */
+export function processResults(resultados: Exoplanet[], query: string): ProcessedData {
+  // 1. Filtrar nombres inválidos
+  const validos = resultados.filter(p => p.pl_name && p.pl_name.trim() !== '');
+
+  // 2. Deduplicar usando Map para una complejidad O(n) en lugar de O(n^2)
+  const mapaUnicos = new Map<string, Exoplanet>();
+  validos.forEach(p => mapaUnicos.set(p.pl_name.toLowerCase(), p));
+  const unicos = Array.from(mapaUnicos.values());
+
+  // 3. Ordenación inmutable (toSorted en lugar de sort que mutaba el array original)
+  const ordenados = unicos.toSorted((a, b) => (a.disc_year || 0) - (b.disc_year || 0));
+
+  // 4. Conteo estadístico mediante reduce
+  const metodosCount = ordenados.reduce((acc: Record<string, number>, p) => {
+    const metodo = p.discoverymethod || 'Desconocido';
+    acc[metodo] = (acc[metodo] || 0) + 1;
+    return acc;
+  }, {});
+
+  // 5. Transformar con map a un array de strings
+  const statsArray = Object.entries(metodosCount).map(([metodo, count]) => `${metodo}: ${count}`);
+
+  // Corrección: Escoger por coincidencia exacta de texto primero, o fallback al más antiguo
+  const queryLower = query.toLowerCase();
+  const bestMatch = ordenados.find(p => p.pl_name.toLowerCase() === queryLower) || ordenados[0];
+
+  return { bestMatch, total: ordenados.length, statsArray };
+}
+
 export function calculateMetrics(planet: Exoplanet): PlanetMetrics {
-  // Manejo robusto de nulos: verificamos explícitamente !== null para no ignorar valores '0'
-  const radio = planet.pl_rade !== null ? planet.pl_rade : (planet.pl_bmasse !== null ? Math.pow(planet.pl_bmasse, 0.33) : 1);
+  const radioBase = planet.pl_rade !== null ? planet.pl_rade : (planet.pl_bmasse !== null ? Math.pow(planet.pl_bmasse, 0.33) : 1);
   const masa = planet.pl_bmasse;
   const temp = planet.pl_eqt;
 
@@ -39,15 +77,15 @@ export function calculateMetrics(planet: Exoplanet): PlanetMetrics {
   }
 
   /* 
-   * JUSTIFICACIÓN CIENTÍFICA:
-   * Utilizamos imágenes de planetas y lunas de nuestro propio Sistema Solar porque, a día de hoy, 
-   * existen límites físicos y ópticos insalvables que nos impiden obtener fotografías reales de 
-   * la superficie de los exoplanetas (se ven a lo sumo como un píxel borroso). 
-   * Por tanto, aplicamos una deducción astrofísica basada en la densidad y temperatura real del 
-   * exoplaneta para asignarle el análogo geológico más preciso posible dentro de nuestro catálogo.
+   * NOTA ACADÉMICA SOBRE LA ASIGNACIÓN DE TEXTURAS:
+   * A día de hoy, las limitaciones ópticas de nuestros telescopios nos impiden obtener
+   * imágenes reales de la superficie de los exoplanetas. Por tanto, utilizamos un modelo 
+   * de deducción basado en analogías con nuestro Sistema Solar. Primero determinamos el tipo 
+   * físico (Lava, Océano, Gaseoso, etc.) mediante densidad y temperatura. Luego, aplicamos el 
+   * módulo de la longitud del nombre del planeta (`nombre.length % n`) sobre un banco de texturas 
+   * de esa misma categoría. Esto garantiza resultados visuales que, aunque representativos 
+   * y arbitrarios dentro de su clase, son científicamente plausibles y persistentes entre búsquedas.
    */
-  
-  // Corrección: Reemplazo de cadenas if/else largas por una tabla de reglas simple
   const texturas = {
     lava: ['/Venus.jpg', '/Jupiter_Io(B).jpg'],
     templado: ['/Mars.jpg'],
@@ -60,10 +98,9 @@ export function calculateMetrics(planet: Exoplanet): PlanetMetrics {
   let tipoPlaneta = 'Desconocido';
   let texturaCategoria: keyof typeof texturas = 'enano';
   
-  // Usamos la longitud del nombre como semilla determinista
   const seed = planet.pl_name.length;
 
-  if (radio < 0.5) {
+  if (radioBase < 0.5) {
     tipoPlaneta = "Planeta Enano / Asteroide";
     texturaCategoria = 'enano';
   } else if (densidad !== null) {
@@ -77,12 +114,11 @@ export function calculateMetrics(planet: Exoplanet): PlanetMetrics {
       tipoPlaneta = "Gigante Gaseoso"; texturaCategoria = 'gaseoso';
     }
   } else {
-    // Estimación por radio si falta la masa
-    if (radio < 1.6) {
+    if (radioBase < 1.6) {
       if (temp !== null && temp > 800) { tipoPlaneta = "Rocoso (Lava)"; texturaCategoria = 'lava'; }
       else if (temp !== null && temp > 200 && temp < 400) { tipoPlaneta = "Rocoso (Templado)"; texturaCategoria = 'templado'; }
       else { tipoPlaneta = "Rocoso (Helado)"; texturaCategoria = 'helado'; }
-    } else if (radio < 4) {
+    } else if (radioBase < 4) {
       tipoPlaneta = "Supertierra / Gigante de Hielo"; texturaCategoria = 'oceano';
     } else {
       tipoPlaneta = "Gigante Gaseoso"; texturaCategoria = 'gaseoso';
@@ -92,5 +128,5 @@ export function calculateMetrics(planet: Exoplanet): PlanetMetrics {
   const arraySeleccionado = texturas[texturaCategoria];
   const textura = arraySeleccionado[seed % arraySeleccionado.length];
 
-  return { densidad, gravedad, distAL, habitabilidad, tipoPlaneta, textura };
+  return { densidad, gravedad, distAL, habitabilidad, tipoPlaneta, textura, radioBase };
 }

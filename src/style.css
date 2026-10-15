@@ -144,3 +144,9 @@ button:hover {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }
+
+.metadata-stats {
+  color: var(--accent);
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
