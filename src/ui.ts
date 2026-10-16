@@ -1,8 +1,8 @@
 import type { Exoplanet } from './api';
-import { calculateMetrics, type ProcessedData } from './classify';
+import type { PlanetMetrics, ProcessedData } from './classify';
 
-function escapeHTML(str: string | number | null): string {
-  if (str === null || str === undefined) return 'Desconocida';
+function escapeHTML(str: string | number | null | undefined): string {
+  if (str == null) return 'Desconocida';
   return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -37,16 +37,19 @@ export function clearMessage(): void {
   if (messageBox) messageBox.textContent = "";
 }
 
-// Corrección Módulos: ui.ts se encarga de crear el DOM de las estadísticas (sin estilos en línea)
-export function renderPlanet(planet: Exoplanet, processed: ProcessedData): void {
+// UI recibe los datos ya calculados y formatea los strings de presentación
+export function renderPlanet(planet: Exoplanet, metrics: PlanetMetrics, processed: ProcessedData): void {
   const planetDisplay = document.getElementById('planet-display');
   const planetInfo = document.getElementById('planet-info');
   
   if (!planetDisplay || !planetInfo) return;
 
-  const metrics = calculateMetrics(planet);
-  // Reutiliza el radioBase que ya procesó calculateMetrics
   const sizePx = Math.round(150 * Math.min(Math.max(metrics.radioBase, 0.5), 2.5)); 
+  
+  // Formateo de strings extraído de la lógica pura
+  const statsString = Object.entries(processed.metodosCount)
+    .map(([metodo, count]) => `${escapeHTML(metodo)}: ${escapeHTML(count)}`)
+    .join(' | ');
 
   planetDisplay.innerHTML = `
     <div class="planet-sphere" style="width: ${sizePx}px; height: ${sizePx}px; background-image: url('${escapeHTML(metrics.textura)}');"></div>
@@ -55,19 +58,19 @@ export function renderPlanet(planet: Exoplanet, processed: ProcessedData): void 
   planetInfo.innerHTML = `
     <div class="metadata-stats">
       Resultados relacionados encontrados: ${escapeHTML(processed.total)}. <br> 
-      Métodos en este sector: ${escapeHTML(processed.statsArray.join(' | '))}.
+      Métodos en este sector: ${statsString}.
     </div>
     <h3>${escapeHTML(planet.pl_name)}</h3>
     <ul class="data-grid">
       <li><strong>Clasificación</strong> ${escapeHTML(metrics.tipoPlaneta)}</li>
       <li><strong>Habitabilidad</strong> ${escapeHTML(metrics.habitabilidad)}</li>
       <li><strong>Estrella Anfitriona</strong> ${escapeHTML(planet.hostname)}</li>
-      <li><strong>Distancia</strong> ${metrics.distAL !== null ? escapeHTML(metrics.distAL) + ' Años Luz' : 'Desconocida'}</li>
-      <li><strong>Gravedad</strong> ${metrics.gravedad !== null ? escapeHTML(Math.round(metrics.gravedad * 100) / 100) + ' x 🌍 (g)' : 'Datos insuficientes'}</li>
-      <li><strong>Radio</strong> ${planet.pl_rade !== null ? escapeHTML(planet.pl_rade) + ' x 🌍' : '~' + escapeHTML(Math.round(metrics.radioBase*10)/10) + ' x 🌍'}</li>
-      <li><strong>Masa</strong> ${planet.pl_bmasse !== null ? escapeHTML(planet.pl_bmasse) + ' x 🌍' : 'Desconocida'}</li>
-      <li><strong>Densidad</strong> ${metrics.densidad !== null ? escapeHTML(Math.round(metrics.densidad * 100) / 100) + ' g/cm³' : 'Desconocida'}</li>
-      <li><strong>Temp. Equilibrio</strong> ${planet.pl_eqt !== null ? escapeHTML(planet.pl_eqt) + ' K' : 'Desconocida'}</li>
+      <li><strong>Distancia</strong> ${metrics.distAL != null ? escapeHTML(metrics.distAL) + ' Años Luz' : 'Desconocida'}</li>
+      <li><strong>Gravedad</strong> ${metrics.gravedad != null ? escapeHTML(Math.round(metrics.gravedad * 100) / 100) + ' x 🌍 (g)' : 'Datos insuficientes'}</li>
+      <li><strong>Radio</strong> ${planet.pl_rade != null ? escapeHTML(planet.pl_rade) + ' x 🌍' : '~' + escapeHTML(Math.round(metrics.radioBase*10)/10) + ' x 🌍'}</li>
+      <li><strong>Masa</strong> ${planet.pl_bmasse != null ? escapeHTML(planet.pl_bmasse) + ' x 🌍' : 'Desconocida'}</li>
+      <li><strong>Densidad</strong> ${metrics.densidad != null ? escapeHTML(Math.round(metrics.densidad * 100) / 100) + ' g/cm³' : 'Desconocida'}</li>
+      <li><strong>Temp. Equilibrio</strong> ${planet.pl_eqt != null ? escapeHTML(planet.pl_eqt) + ' K' : 'Desconocida'}</li>
       <li><strong>Descubrimiento</strong> ${escapeHTML(planet.disc_year)} (${escapeHTML(planet.discoverymethod)})</li>
     </ul>
   `;

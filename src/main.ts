@@ -1,12 +1,12 @@
 import { searchExoplanet } from './api';
 import { showLoading, showError, clearMessage, renderPlanet } from './ui';
-import { processResults } from './classify';
+import { processResults, calculateMetrics } from './classify';
 
 const searchBtn = document.getElementById('search-btn') as HTMLButtonElement;
 const searchInput = document.getElementById('search-input') as HTMLInputElement;
 
 let currentController: AbortController | null = null;
-let currentRequestId = 0; // Usado para saber qué petición maneja el estado visual final
+let currentRequestId = 0; 
 
 async function executeSearch() {
   const query = searchInput.value.trim();
@@ -15,7 +15,6 @@ async function executeSearch() {
     return;
   }
 
-  // Cancelar petición anterior y limpiar su posible carga
   if (currentController) {
     currentController.abort();
     clearMessage();
@@ -24,37 +23,45 @@ async function executeSearch() {
   currentController = new AbortController();
   const reqId = ++currentRequestId;
   
-  // Añadimos un timeout de seguridad (8 segundos)
-  const timeoutId = setTimeout(() => currentController?.abort(), 8000);
+  let isTimeout = false;
+  const timeoutId = setTimeout(() => {
+    isTimeout = true;
+    currentController?.abort();
+  }, 8000);
 
   try {
     searchBtn.disabled = true;
     showLoading(`Escaneando sectores buscando "${query}"...`);
     
     const resultados = await searchExoplanet(query, currentController.signal);
-    clearTimeout(timeoutId);
 
     if (resultados.length === 0) {
       showError(`El exoplaneta "${query}" no se ha encontrado.`);
       return;
     }
 
-    // El módulo de lógica pura orquesta los datos ahora
     const processed = processResults(resultados, query);
+    
+    // main.ts hace el cálculo y le pasa todo masticado a ui.ts
+    const metrics = calculateMetrics(processed.bestMatch);
 
     clearMessage();
-    renderPlanet(processed.bestMatch, processed);
+    renderPlanet(processed.bestMatch, metrics, processed);
     
-  } catch (error: any) {
-    // Evitamos mostrar errores de peticiones canceladas o caducadas intencionalmente
-    if (error.name === 'AbortError' || currentController?.signal.aborted) {
-      if (currentRequestId === reqId) showError("La conexión ha caducado por falta de respuesta (Timeout).");
-      return;
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      if (isTimeout && currentRequestId === reqId) {
+        showError("La conexión ha caducado por falta de respuesta (Timeout).");
+      }
+      return; // Si fue aborto manual por nueva búsqueda, no mostramos error
     }
-    const mensajeError = error instanceof Error ? error.message : String(error);
-    showError(mensajeError);
+    
+    const mensajeError = error instanceof Error ? error.message : "Error desconocido";
+    if (currentRequestId === reqId) showError(mensajeError);
   } finally {
-    // Corrección Asincronía: Solo el proceso activo actual tiene derecho a rehabilitar la UI
+    // El timer se limpia siempre (ruta feliz y ruta de error)
+    clearTimeout(timeoutId);
+    
     if (currentRequestId === reqId) {
       searchBtn.disabled = false;
     }
