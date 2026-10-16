@@ -1,4 +1,4 @@
-import type { Exoplanet } from './api';
+import type { Exoplanet } from './types';
 import type { PlanetMetrics, ProcessedData } from './classify';
 
 function escapeHTML(str: string | number | null | undefined): string {
@@ -21,15 +21,16 @@ export function showLoading(mensaje: string): void {
 
 export function showError(mensaje: string): void {
   const messageBox = document.getElementById('message-box');
-  const planetDisplay = document.getElementById('planet-display');
-  const planetInfo = document.getElementById('planet-info');
-  
   if (messageBox) {
-    messageBox.textContent = `⚠ ${mensaje}`;
+    // CORRECCIÓN: Tratamiento especial si es error de CORS en producción
+    if (mensaje === "CORS_ERROR") {
+      messageBox.innerHTML = `⚠ <b>Limitación de Producción:</b> La API de la NASA bloquea conexiones externas. <br> 
+      <i>Despliega esto usando un servidor Proxy/Serverless, o pruébalo en local con 'npm run dev'.</i>`;
+    } else {
+      messageBox.textContent = `⚠ ${mensaje}`;
+    }
     messageBox.style.color = "#ff4444";
   }
-  if (planetDisplay) planetDisplay.innerHTML = "";
-  if (planetInfo) planetInfo.innerHTML = "";
 }
 
 export function clearMessage(): void {
@@ -37,7 +38,27 @@ export function clearMessage(): void {
   if (messageBox) messageBox.textContent = "";
 }
 
-// UI recibe los datos ya calculados y formatea los strings de presentación
+// CORRECCIÓN: Renderizamos la lista de coincidencias para que el usuario elija
+export function renderMatchesList(matches: Exoplanet[], onSelect: (planet: Exoplanet) => void): void {
+  const container = document.getElementById('matches-container');
+  if (!container) return;
+  
+  if (matches.length <= 1) {
+    container.innerHTML = ""; // No mostramos lista si solo hay 1 o 0
+    return;
+  }
+
+  container.innerHTML = `<span style="color:var(--text-color); margin-right:10px;">Encontrados en el sector:</span>`;
+  
+  matches.forEach(planet => {
+    const btn = document.createElement('button');
+    btn.className = 'match-btn';
+    btn.textContent = planet.pl_name;
+    btn.onclick = () => onSelect(planet);
+    container.appendChild(btn);
+  });
+}
+
 export function renderPlanet(planet: Exoplanet, metrics: PlanetMetrics, processed: ProcessedData): void {
   const planetDisplay = document.getElementById('planet-display');
   const planetInfo = document.getElementById('planet-info');
@@ -46,7 +67,6 @@ export function renderPlanet(planet: Exoplanet, metrics: PlanetMetrics, processe
 
   const sizePx = Math.round(150 * Math.min(Math.max(metrics.radioBase, 0.5), 2.5)); 
   
-  // Formateo de strings extraído de la lógica pura
   const statsString = Object.entries(processed.metodosCount)
     .map(([metodo, count]) => `${escapeHTML(metodo)}: ${escapeHTML(count)}`)
     .join(' | ');

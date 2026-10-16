@@ -1,24 +1,35 @@
-import type { Exoplanet } from './api';
+import type { Exoplanet } from './types';
 
 const TTL = 86400000; // 24 horas
+const CURRENT_VERSION = 'v10'; // Subimos versión
+
+export function cleanOldCaches() {
+  // CORRECCIÓN: Limpiamos activamente cachés de versiones anteriores
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith('nasa_exo_') && !key.includes(`_${CURRENT_VERSION}_`)) {
+      localStorage.removeItem(key);
+    }
+  }
+}
 
 export function getCache(key: string): Exoplanet[] | null {
   const cached = localStorage.getItem(key);
   if (!cached) return null;
 
   try {
-    const parsedCache = JSON.parse(cached);
-    // Validación de la forma (shape) de los datos cacheados
+    const parsed = JSON.parse(cached);
+    // CORRECCIÓN: Validación estricta de la forma de los datos
     if (
-      parsedCache && 
-      typeof parsedCache.timestamp === 'number' && 
-      Array.isArray(parsedCache.data) &&
-      (Date.now() - parsedCache.timestamp < TTL)
+      parsed != null &&
+      typeof parsed.timestamp === 'number' &&
+      Array.isArray(parsed.data) &&
+      (Date.now() - parsed.timestamp < TTL)
     ) {
-      return parsedCache.data;
+      return parsed.data as Exoplanet[];
     }
   } catch (e) {
-    console.warn("Caché corrupta o inválida, se ignorará.", e);
+    console.warn("Caché corrupta o estructura inválida.");
   }
   
   localStorage.removeItem(key);
@@ -29,6 +40,6 @@ export function setCache(key: string, data: Exoplanet[]): void {
   try {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   } catch (error) {
-    console.warn("No se pudo guardar la caché (Cuota excedida o modo privado).");
+    console.warn("No se pudo guardar la caché.");
   }
 }

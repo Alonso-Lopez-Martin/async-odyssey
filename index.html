@@ -9,24 +9,22 @@
 <body>
   <h1>🪐 Explorador de Exoplanetas</h1>
   
-  <!-- El buscador -->
-<div class="search-panel">
-  <input type="text" id="search-input" placeholder="Ej: Kepler-22 b, 55 Cancri e..." autocomplete="off">
-  <button id="search-btn">Buscar Planeta</button>
-  <!-- Botón secundario agrupado por Ley de Proximidad (Gestalt) -->
-  <a href="https://science.nasa.gov/exoplanet-catalog/" target="_blank" class="btn-secondary">Catálogo de Exoplanetas</a>
-</div>
+  <div class="search-panel">
+    <input type="text" id="search-input" placeholder="Ej: Kepler-22 b, TRAPPIST-1..." autocomplete="off">
+    <button id="search-btn">Buscar Planeta</button>
+    <a href="https://science.nasa.gov/exoplanet-catalog/" target="_blank" class="btn-secondary">Catálogo de Exoplanetas</a>
+  </div>
 
   <p id="message-box" class="estado-mensaje"></p>
+  
+  <!-- CORRECCIÓN: Contenedor para mostrar la lista interactiva de coincidencias -->
+  <div id="matches-container" class="matches-container"></div>
 
   <div class="viewer-container">
     <div id="planet-display">
-      <!-- Aquí inyectaremos el planeta rotando -->
+      <p style="color: #666;">Inicia una búsqueda para visualizar telemetría.</p>
     </div>
-    
-    <div id="planet-info" class="data-corner">
-      <p>Inicia una búsqueda para visualizar telemetría.</p>
-    </div>
+    <div id="planet-info" class="data-corner"></div>
   </div>
 
   <script type="module" src="/src/main.ts"></script>

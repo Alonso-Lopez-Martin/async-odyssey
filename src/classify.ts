@@ -1,4 +1,4 @@
-import type { Exoplanet } from './api';
+import type { Exoplanet } from './types';
 
 export interface PlanetMetrics {
   densidad: number | null;
@@ -11,18 +11,25 @@ export interface PlanetMetrics {
 }
 
 export interface ProcessedData {
+  allMatches: Exoplanet[]; // CORRECCIÓN: Devolvemos todos para mostrarlos en lista
   bestMatch: Exoplanet;
   total: number;
-  metodosCount: Record<string, number>; // Devolvemos datos puros, no strings formateados
+  metodosCount: Record<string, number>; 
 }
 
 export function processResults(resultados: Exoplanet[], query: string): ProcessedData {
   const validos = resultados.filter(p => p.pl_name && p.pl_name.trim() !== '');
 
-  // Deduplicación O(n) directa inicializando el Map con el array mapeado
-  const mapaUnicos = new Map(validos.map(p => [p.pl_name.toLowerCase(), p]));
+  // CORRECCIÓN: Deduplicación consciente. Si el Map ya lo tiene, no lo machacamos.
+  const mapaUnicos = new Map<string, Exoplanet>();
+  validos.forEach(p => {
+    const key = p.pl_name.toLowerCase();
+    if (!mapaUnicos.has(key)) {
+      mapaUnicos.set(key, p);
+    }
+  });
+  
   const unicos = Array.from(mapaUnicos.values());
-
   const ordenados = unicos.toSorted((a, b) => (a.disc_year || 0) - (b.disc_year || 0));
 
   const metodosCount = ordenados.reduce((acc: Record<string, number>, p) => {
@@ -34,11 +41,10 @@ export function processResults(resultados: Exoplanet[], query: string): Processe
   const queryLower = query.toLowerCase();
   const bestMatch = ordenados.find(p => p.pl_name.toLowerCase() === queryLower) || ordenados[0];
 
-  return { bestMatch, total: ordenados.length, metodosCount };
+  return { allMatches: ordenados, bestMatch, total: ordenados.length, metodosCount };
 }
 
 export function calculateMetrics(planet: Exoplanet): PlanetMetrics {
-  // Comprobación inclusiva == null (cubre null y undefined)
   const radioBase = planet.pl_rade != null ? planet.pl_rade : (planet.pl_bmasse != null ? Math.pow(planet.pl_bmasse, 0.33) : 1);
   const masa = planet.pl_bmasse;
   const temp = planet.pl_eqt;
@@ -64,13 +70,6 @@ export function calculateMetrics(planet: Exoplanet): PlanetMetrics {
     }
   }
 
-  /* 
-   * ALGORITMO DE TEXTURAS (ORIGINALIDAD):
-   * Hemos abandonado la asignación arbitraria por longitud de nombre. 
-   * Ahora usamos una "Semilla Orbital": tomamos el Período Orbital (los días que tarda 
-   * en dar una vuelta a su estrella). Esto vincula la representación visual directamente 
-   * con las mecánicas celestes reales del exoplaneta en la base de datos de la NASA.
-   */
   const texturas = {
     lava: ['/Venus.jpg', '/Jupiter_Io(B).jpg'],
     templado: ['/Mars.jpg'],
@@ -83,7 +82,6 @@ export function calculateMetrics(planet: Exoplanet): PlanetMetrics {
   let tipoPlaneta = 'Desconocido';
   let texturaCategoria: keyof typeof texturas = 'enano';
   
-  // Semilla matemática basada en dinámicas orbitales reales
   const orbitalSeed = Math.floor((planet.pl_orbper ?? planet.disc_year ?? 1) * 123.45);
 
   if (radioBase < 0.5) {

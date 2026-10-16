@@ -1,12 +1,21 @@
 import { searchExoplanet } from './api';
-import { showLoading, showError, clearMessage, renderPlanet } from './ui';
+import { showLoading, showError, clearMessage, renderPlanet, renderMatchesList } from './ui';
 import { processResults, calculateMetrics } from './classify';
+import { FetchManager } from './fetchManager';
+import type { Exoplanet } from './types';
 
 const searchBtn = document.getElementById('search-btn') as HTMLButtonElement;
 const searchInput = document.getElementById('search-input') as HTMLInputElement;
 
-let currentController: AbortController | null = null;
-let currentRequestId = 0; 
+// Instanciamos el manager puro
+const fetchManager = new FetchManager();
+let currentProcessedData: any = null; // Guardamos contexto
+
+function displaySelectedPlanet(planet: Exoplanet) {
+  if (!currentProcessedData) return;
+  const metrics = calculateMetrics(planet);
+  renderPlanet(planet, metrics, currentProcessedData);
+}
 
 async function executeSearch() {
   const query = searchInput.value.trim();
@@ -15,54 +24,44 @@ async function executeSearch() {
     return;
   }
 
-  if (currentController) {
-    currentController.abort();
-    clearMessage();
-  }
-  
-  currentController = new AbortController();
-  const reqId = ++currentRequestId;
-  
-  let isTimeout = false;
-  const timeoutId = setTimeout(() => {
-    isTimeout = true;
-    currentController?.abort();
-  }, 8000);
+  clearMessage();
+  document.getElementById('matches-container')!.innerHTML = ""; // Limpiamos lista
+  const { reqId, signal, timeoutId } = fetchManager.startRequest(8000);
 
   try {
     searchBtn.disabled = true;
     showLoading(`Escaneando sectores buscando "${query}"...`);
     
-    const resultados = await searchExoplanet(query, currentController.signal);
+    const resultados = await searchExoplanet(query, signal);
 
     if (resultados.length === 0) {
       showError(`El exoplaneta "${query}" no se ha encontrado.`);
       return;
     }
 
-    const processed = processResults(resultados, query);
-    
-    // main.ts hace el cálculo y le pasa todo masticado a ui.ts
-    const metrics = calculateMetrics(processed.bestMatch);
-
+    currentProcessedData = processResults(resultados, query);
     clearMessage();
-    renderPlanet(processed.bestMatch, metrics, processed);
+    
+    // Mostramos la lista interactiva y pintamos el mejor match por defecto
+    renderMatchesList(currentProcessedData.allMatches, displaySelectedPlanet);
+    displaySelectedPlanet(currentProcessedData.bestMatch);
     
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      if (isTimeout && currentRequestId === reqId) {
-        showError("La conexión ha caducado por falta de respuesta (Timeout).");
-      }
-      return; // Si fue aborto manual por nueva búsqueda, no mostramos error
+    // Abortos programados y caducidades
+    if (error === "TIMEOUT" && fetchManager.isCurrent(reqId)) {
+      showError("La conexión ha caducado por falta de respuesta del servidor (Timeout).");
+      return;
     }
+    // Si fue manual por nueva búsqueda, nos salimos
+    if (error instanceof Error && error.name === 'AbortError') return;
     
-    const mensajeError = error instanceof Error ? error.message : "Error desconocido";
-    if (currentRequestId === reqId) showError(mensajeError);
+    if (fetchManager.isCurrent(reqId)) {
+      showError(error instanceof Error ? error.message : "Error desconocido");
+    }
   } finally {
-    // El timer se limpia siempre (ruta feliz y ruta de error)
-    clearTimeout(timeoutId);
-    
-    if (currentRequestId === reqId) {
+    // CORRECCIÓN: Timeout limpio en finally usando el Manager
+    fetchManager.finishRequest(timeoutId);
+    if (fetchManager.isCurrent(reqId)) {
       searchBtn.disabled = false;
     }
   }

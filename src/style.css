@@ -189,3 +189,29 @@ button:hover {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }
+
+/* LISTA DE RESULTADOS INTERACTIVA */
+.matches-container {
+  max-width: 1200px;
+  margin: 0 auto 20px auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.match-btn {
+  padding: 8px 15px;
+  font-size: 0.9em;
+  background: #161b22;
+  color: var(--text-color);
+  border: 1px solid #30363d;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.match-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
